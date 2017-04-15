@@ -86,6 +86,8 @@ io.on('connection', function (socket) {
             
         var roomID = roomHandler.socketJoin(socket, data.roomID);
 
+        adminHandler.log('uuid: '+ data.uuid + " roomID: " + data.roomID);
+
         var user = socket.user;
 
         if (newUser) {
