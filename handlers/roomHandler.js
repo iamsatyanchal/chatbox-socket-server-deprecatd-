@@ -107,7 +107,7 @@ roomHandler.socketLeftRoom = function(socket) {
 
     // May not want to delete the room, we'll lose the total user count and message count
     if (room.userCount === 0)
-        delete roomDict[roomID];
+        delete roomDict[socket.roomID];
 
     return last_socket_in_this_room;
 
