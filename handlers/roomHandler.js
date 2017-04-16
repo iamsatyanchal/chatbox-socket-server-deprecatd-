@@ -4,7 +4,18 @@ var md5 = require('../utils/md5.js');
 
 var DEFAULT_ROOM = 'Lobby';
 var roomHandler = {};
-var roomDict = {};
+var roomDict = {}; // Holds a dictionary of roomIDs
+
+
+// Room Model
+// room.id = roomID;
+// room.createTime = (new Date()).toString();
+// room.userDict = {};
+// room.userCount = 0; ???
+// room.totalUsers = 0; ???
+// room.totalSockets = 0;
+// room.totalMsg = 0;
+// room.adminUserDict = {};
 
 
 //TODO: add back md5.encode(inToken)
@@ -34,56 +45,71 @@ roomHandler.getUsersInRoom = function(inToken) {
 };
 
 
-// Check if the socket's user already in a room
-// otherwise, use the input roomID
-// else go to lobby
+// Check if the socket's user already in the room
 roomHandler.socketJoin = function(socket, roomID) {
 
+    // Check if room exist, if not create new room
+    // Check if user already has other socket in this room
+
     var user = socket.user;
-    var room;
+    var isNewUserOfRoom = true;
 
-    if (typeof(user.roomID) == 'undefined') {
+    var room = null;
 
-        if (typeof(roomID) == 'undefined') {
-            roomID = DEFAULT_ROOM;
-        }
+    if (roomID in roomDict)
+
+        room = roomDict[roomID];
+
+    else
+
+        room = createRoom(roomID); 
+
+    room.totalSockets ++;
+
+    if (user.id in room.userDict) {
+
+        isNewUserOfRoom = false;
+
+    }
 
 
-        if (roomID in roomDict)
+    room.userDict[user.id] = user;
+    // user.roomID = roomID;  Wrong! user can have multiple rooms  
 
-            room = roomDict[roomID];
+    socket.join(roomID);
+    socket.roomID = roomID;
 
-        else
-
-            room = createRoom(roomID); 
-
-        room.userDict[user.id] = user;
-        room.userCount ++;
-        room.totalUsers ++;
-        user.roomID = roomID;
-
-    }else
-        room = roomDict[user.roomID]; 
-
-    room.totalSockets++;     
-
-    socket.join(user.roomID);
-
-    return user.roomID;
+    return isNewUserOfRoom;
     
 };
 
-roomHandler.leftRoom = function(user) {
+roomHandler.socketLeftRoom = function(socket) {
 
-    var room = roomDict[user.roomID];
-    delete room.userDict[user.id];
-    delete room.adminUserDict[user.id];
+    var room = roomDict[socket.roomID];
+    var user = socket.user;
 
-    room.userCount--;
+    var last_socket_in_this_room = true;
+    var i = 0;
+    for (; i<user.socketIDList.length; i++) {
+        var s = user.socketIDList[i];
+        if (s.id != socket.id && s.roomID == socket.roomID) {
+            last_socket_in_this_room = false;
+            break;
+        }
+    }
+    
+    if (last_socket_in_this_room) {
+        delete room.userDict[socket.user.id];
+        // delete room.adminUserDict[user.id];
+        room.userCount--;
+    }
 
     // May not want to delete the room, we'll lose the total user count and message count
     if (room.userCount === 0)
-        delete roomDict[user.roomID];
+        delete roomDict[roomID];
+
+    return last_socket_in_this_room;
+
 };
 
 roomHandler.newMsg = function (roomID) {

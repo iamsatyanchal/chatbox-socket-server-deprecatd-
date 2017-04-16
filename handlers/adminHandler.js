@@ -59,86 +59,88 @@ adminHandler.log = function (str, roomID) {
         adminHandler.sendLogToRoomAdmin(str, roomID);
 };
 
-adminHandler.sendCommand = function (io, inToken, userIDList, socketIDList, commandType, commandContent) {
+// adminHandler.sendCommand = function (io, inToken, userIDList, socketIDList, commandType, commandContent) {
 
-    // TODO: need to double check if target user/sockets are in the room as room Admin
-    if(inToken === token || roomHandler.validToken(inToken)) {
+//     // TODO: need to double check if target user/sockets are in the room as room Admin
+//     if(inToken === token || roomHandler.validToken(inToken)) {
 
-        adminHandler.log('Received command from admin (' + commandType + ')');
+//         adminHandler.log('Received command from admin (' + commandType + ')');
 
-        // handle individual sockets
-        var i,s;
-        for (i = 0; i < socketIDList.length; i++) {
-            var sid = socketIDList[i];
-            s = socketHandler.getSocket(sid);
-            sendCommandToSocket(s, commandType, commandContent);
-        }
+//         // handle individual sockets
+//         var i,s;
+//         for (i = 0; i < socketIDList.length; i++) {
+//             var sid = socketIDList[i];
+//             s = socketHandler.getSocket(sid);
+//             sendCommandToSocket(s, commandType, commandContent);
+//         }
 
-        // handle users and all their sockets
-        for (i = 0; i < userIDList.length; i++) {
-            var uid = userIDList[i];
-            if(socketHandler.userExists(uid)) { // in case is already gone
-                var user = socketHandler.getUser(uid);
+//         // handle users and all their sockets
+//         for (i = 0; i < userIDList.length; i++) {
+//             var uid = userIDList[i];
+//             if(socketHandler.userExists(uid)) { // in case is already gone
+//                 var user = socketHandler.getUser(uid);
 
-                if (commandType === 'admin kick'){
-                    kickAllUsersSockets(io, user, commandType, commandContent);
-                }else {
-                    for (var j = 0; j< user.socketIDList.length; j++) {
-                        s = socketHandler.getSocket(user.socketIDList[j]);
-                        sendCommandToSocket(s, commandType, commandContent);
-                    }
-                }
-            }
-        }
-    } 
-};
+//                 if (commandType === 'admin kick'){
+//                     kickAllUsersSockets(io, user, commandType, commandContent);
+//                 }else {
+//                     for (var j = 0; j< user.socketIDList.length; j++) {
+//                         s = socketHandler.getSocket(user.socketIDList[j]);
+//                         sendCommandToSocket(s, commandType, commandContent);
+//                     }
+//                 }
+//             }
+//         }
+//     } 
+// };
 
 // When admin changes a user's username
-adminHandler.adminChangeUsername = function (io, inToken, userID, newName) {
+// adminHandler.adminChangeUsername = function (io, inToken, userID, newName) {
     
-    // TODO: need to double check if target user/sockets are in the room as room Admin
-    if(inToken === token || roomHandler.validToken(inToken)) {
+//     // TODO: need to double check if target user/sockets are in the room as room Admin
+//     if(inToken === token || roomHandler.validToken(inToken)) {
 
-        // User might be gone already
-        if (!socketHandler.userExists(userID)) {
-            adminHandler.log('Failed to changed name to ' + newName + ' because user already left.', user.roomID);
-            return;
-        }
+//         // User might be gone already
+//         if (!socketHandler.userExists(userID)) {
+//             // Must fix! user.roomID needs to be socket.roomID
+//             adminHandler.log('Failed to changed name to ' + newName + ' because user already left.', user.roomID);
+//             return;
+//         }
 
-        var user = socketHandler.getUser(userID);
-
-
-        var oldName = user.username;
-
-        usernameHandler.adminEditName(user, newName);
-
-        io.in(user.roomID).emit('log change name', {
-            username: user.username,
-            oldname: oldName
-        });
-
-        adminHandler.log(oldName + ' changed name to ' + user.username, user.roomID);
-    }
-
-};
+//         var user = socketHandler.getUser(userID);
 
 
+//         var oldName = user.username;
+
+//         usernameHandler.adminEditName(user, newName);
+
+//         io.in(user.roomID).emit('log change name', {
+//             username: user.username,
+//             oldname: oldName
+//         });
+
+//         adminHandler.log(oldName + ' changed name to ' + user.username, user.roomID);
+//     }
+
+// };
 
 
-function kickAllUsersSockets(io, user, commandType, commandContent) {
 
-    // broadcast kick message first then kick, so that user being kicked can see it too
-    io.in(user.roomID).emit(commandType, {content: commandContent, username: user.username}); 
 
-    var tmpSocketIDList = [];
+// function kickAllUsersSockets(io, user, commandType, commandContent) {
 
-    for (var i = 0; i< user.socketIDList.length; i++) 
-        tmpSocketIDList.push(user.socketIDList[i]);
+//     // broadcast kick message first then kick, so that user being kicked can see it too
+//     // Must Fix: user.roomID is wrong, should be socket.roomID
+//     io.in(user.roomID).emit(commandType, {content: commandContent, username: user.username}); 
 
-    for (var j = 0; j< tmpSocketIDList.length; j++) 
-        socketHandler.getSocket(tmpSocketIDList[j]).disconnect();
+//     var tmpSocketIDList = [];
 
-}
+//     for (var i = 0; i< user.socketIDList.length; i++) 
+//         tmpSocketIDList.push(user.socketIDList[i]);
+
+//     for (var j = 0; j< tmpSocketIDList.length; j++) 
+//         socketHandler.getSocket(tmpSocketIDList[j]).disconnect();
+
+// }
 
 
 function sendCommandToSocket(socket, commandType, commandContent) {

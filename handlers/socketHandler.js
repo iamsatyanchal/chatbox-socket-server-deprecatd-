@@ -2,9 +2,11 @@
 
 var utils = require('../utils/utils.js');
 
-// users are grouped by browser base on cookie's uuid implementation,
+// users are grouped by browser base on chrome storage's uuid implementation,
 // therefore 1 connection is the smallest unique unit and 1 user is not.
 // 1 user may contain multiple connections when he opens multiple tabs in same browser.
+
+
 var userDict = {};
 var onlineUserCount = 0;
 
@@ -102,7 +104,8 @@ socketHandler.socketDisconnected = function(socket) {
 
 socketHandler.socketJoin = function(socket, url, referrer, uid, username, roomID) {
 
-
+    // Disregard concept of room, if the user has socket in other room,
+    // still count him as existing user
 	var firstSocketOfNewUser = false;
 
     socket.joinTime = utils.getTime();
@@ -115,8 +118,7 @@ socketHandler.socketJoin = function(socket, url, referrer, uid, username, roomID
 
     var action = {};
 
-
-    if (uid in userDict && roomID == userDict[uid].roomID) {
+    if (uid in userDict) {
     	// existing user
         action.type = 'Join';
 

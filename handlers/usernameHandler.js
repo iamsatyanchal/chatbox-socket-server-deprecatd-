@@ -9,11 +9,10 @@ var usernameHandler = {};
 var roomsOfNames = {}; // a dict of usernamesInRoom
 
 // This method must be called whenever we give out a username so we can 
-// keep track of distributed usernames
+// keep track of given usernames
 // And before calling setUsername, always call checkUsername to get a unique name
-function setUsername(user, name) {
+function saveNameInRoom(name, roomID) {
 
-    var roomID = user.roomID;
 
     var namesInRoom = {};
 
@@ -26,14 +25,13 @@ function setUsername(user, name) {
 
 
     namesInRoom[name] = true;
-    user.username = name;
 
 }
 
 // usernameHandler.setUsername = setUsername; //no need to expose this function
 
 // this is called when 1. user left room 2. user change name
-usernameHandler.releaseUsername = function (roomID, name) { 
+usernameHandler.releaseUsername = function (name, roomID) { 
 
     if (roomID in roomsOfNames) {
 
@@ -48,7 +46,7 @@ usernameHandler.releaseUsername = function (roomID, name) {
 
 // check if the username is used, if not return it
 // if it's used, return a username not used by adding number
-function checkUsername(roomID, name) {
+function checkUsername(name, roomID) {
 
     //add more filters here to sanitize user input, name change also goes through here
     if (name === '') name = 'no name'; 
@@ -75,8 +73,6 @@ function checkUsername(roomID, name) {
                 return newName;
             }
         }
-
-
     }
 
     return name;
@@ -84,16 +80,16 @@ function checkUsername(roomID, name) {
 
 usernameHandler.checkUsername = checkUsername;
 
-function registerUniqueName (user, name) {
+function registerUniqueName (client_requested_name, roomID) {
+    // This is called when
+    // 1. user first time enter a new room
+    // 2. user change name
 
-    // console.log('name trying to register: '+name);
-    name = checkUsername(user.roomID, name);
-    // console.log('name allowed: '+name);
+    var server_agreed_name = checkUsername(client_requested_name, roomID);
 
-    setUsername(user, name);
-    // console.log('user.username '+user.username);
+    saveNameInRoom(server_agreed_name, roomID);
 
-    return name;
+    return server_agreed_name;
 
 }
 
@@ -102,53 +98,50 @@ usernameHandler.registerUniqueName = registerUniqueName;
 usernameHandler.getNamesInRoom = function (roomID) { return roomsOfNames[roomID]; };
 
 
-function changeName(user, newName) {
+function changeName(socket, newName, roomID) {
+    // change current socket's name, also tell this
+    // user's all socket in current room to change name
 
-    // console.log('trying to change to '+ newName);
+    // TBD: do we want to release the name as soon as user changes name?
+    usernameHandler.releaseUsername(socket.username, roomID); 
 
-    var oldName = user.username;
+    var approvedNewName = registerUniqueName(newName, roomID);
 
-    // consideration: do we want to release the name as soon as user changes name?
-    usernameHandler.releaseUsername(user.roomID, oldName); 
 
-    var approvedNewName = registerUniqueName(user, newName);
-    // console.log('approvedNewName '+ approvedNewName);
+    var socketIDsToChangeName = socket.user.socketIDList;
 
-    var socketIDsToChangeName = user.socketIDList;
-
-    for (var i = 0; i< socketIDsToChangeName.length; i++) 
-    	socketHandler.getSocket(socketIDsToChangeName[i]).emit('change username', { username: approvedNewName });
+    for (var i = 0; i< socketIDsToChangeName.length; i++) {
+        var s = socketHandler.getSocket(socketIDsToChangeName[i]);
+        if (s.roomID = roomID) {
+    	   s.emit('change username', { username: approvedNewName });
+           s.username = approvedNewName;
+        }
+    }
     
 
     return approvedNewName;
 }
 
-usernameHandler.adminEditName = function(user, newName) {
+// usernameHandler.adminEditName = function(user, newName) {
 
-    // change name and sync name change
-    var oldName = user.username;
+//     // change name and sync name change
+//     var oldName = user.username;
 
-    if (oldName === newName) return;
+//     if (oldName === newName) return;
 
-    newName = changeName(user, newName);
+//     newName = changeName(user, newName);
 
-    var action = {};
-    action.type = 'Name Changed by Admin';
-    action.time = utils.getTime();
-    action.url = 'N/A';
-    action.detail = 'Changed name from ' + oldName + ' to ' + newName;
-    user.actionList.push(action);
-};
+//     var action = {};
+//     action.type = 'Name Changed by Admin';
+//     action.time = utils.getTime();
+//     action.url = 'N/A';
+//     action.detail = 'Changed name from ' + oldName + ' to ' + newName;
+//     user.actionList.push(action);
+// };
 
 usernameHandler.userEditName = function(socket, newName) {
-
-    // change name and sync name change
-    var oldName = socket.user.username;
-
-    if (oldName === newName) return;
-
-
-    newName = changeName(socket.user, newName);
+    var oldName = socket.username;
+    newName = changeName(socket, newName, socket.roomID);
 
     var action = {};
     action.type = 'Change Name';
