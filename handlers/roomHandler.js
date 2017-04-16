@@ -1,6 +1,7 @@
 "use strict";
 
 var md5 = require('../utils/md5.js');
+var socketHandler = require('./socketHandler.js');
 
 var DEFAULT_ROOM = 'Lobby';
 var roomHandler = {};
@@ -91,7 +92,7 @@ roomHandler.socketLeftRoom = function(socket) {
     var last_socket_in_this_room = true;
     var i = 0;
     for (; i<user.socketIDList.length; i++) {
-        var s = user.socketIDList[i];
+        var s = socketHandler.getSocket(user.socketIDList[i]);
         if (s.id != socket.id && s.roomID == socket.roomID) {
             last_socket_in_this_room = false;
             break;

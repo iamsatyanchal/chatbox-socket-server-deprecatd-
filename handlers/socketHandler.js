@@ -102,7 +102,7 @@ socketHandler.socketDisconnected = function(socket) {
     return lastConnectionOfUser; 
 };
 
-socketHandler.socketJoin = function(socket, url, referrer, uid, username, roomID) {
+socketHandler.socketJoin = function(socket, url, referrer, uid, username) {
 
     // Disregard concept of room, if the user has socket in other room,
     // still count him as existing user

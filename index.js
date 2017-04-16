@@ -82,7 +82,7 @@ io.on('connection', function (socket) {
         var client_requested_name = data.username;
 
         // "isNewUser" boolean disregard room 
-        var isNewUser = socketHandler.socketJoin(socket, data.url, data.referrer, data.uuid, client_requested_name, data.roomID);
+        var isNewUser = socketHandler.socketJoin(socket, data.url, data.referrer, data.uuid, client_requested_name);
         
         var isNewUserOfRoom = roomHandler.socketJoin(socket, data.roomID);
 
@@ -138,7 +138,7 @@ io.on('connection', function (socket) {
 
         }
 
-        adminHandler.log(client_requested_name + ' joined in room ' + socket.roomID + ' server agreed name: ' + server_agreed_name);
+        adminHandler.log(client_requested_name + '[' + data.uuid + ']' + ' joined in room ' + socket.roomID + ' server agreed name: ' + server_agreed_name);
 
 
     });
@@ -148,10 +148,10 @@ io.on('connection', function (socket) {
         
 
         // the user only exist after login
-        if (!socket.joined)
+        if (!socket.joined) {
             adminHandler.log('Socket disconnected before logging in, sid: ' + socket.id);
-        else
-            adminHandler.log(socket.username + ' closed a connection ('+(socket.user.socketIDList.length)+') room ' + socket.roomID);
+            return;
+        }
 
         // remove user from room if it's his last connection
         var lastConnectionOfUserInOneRoom = roomHandler.socketLeftRoom(socket);
@@ -161,6 +161,7 @@ io.on('connection', function (socket) {
 
 
         if (lastConnectionOfUserInOneRoom) {
+            adminHandler.log(socket.username + '['+ socket.user.id + '] (' + socket.user.socketIDList.length + ') left room ' + socket.roomID);
 
             usernameHandler.releaseUsername(socket.username, socket.roomID);
 
@@ -170,6 +171,9 @@ io.on('connection', function (socket) {
                 username: socket.username,
                 numUsers: 90404 // TODO
             });
+
+        } else {
+            adminHandler.log(socket.username + '['+ socket.user.id + '] closed a connection ('+(socket.user.socketIDList.length)+') in room ' + socket.roomID);
         }
 
     });
