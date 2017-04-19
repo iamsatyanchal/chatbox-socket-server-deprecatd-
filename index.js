@@ -56,7 +56,23 @@ app.use(function (req, res, next) {
 
 // Endpoints for monitoring
 
+app.get('/user', function (req, res) {
+    res.send(socketHandler.getAllUsers());
+})
 
+app.get('/user/:userId', function (req, res) {
+    res.send(socketHandler.getUser(req.params.userId));
+})
+
+app.get('/socket', function (req, res) {
+    // TODO: Converting circular structure to JSON at Object.stringify (native) failed
+    res.send(socketHandler.getAllSockets());
+})
+
+app.get('/socket/:socketId', function (req, res) {
+    // TODO: Converting circular structure to JSON at Object.stringify (native) failed
+    res.send(socketHandler.getSocket(req.params.socketId));
+})
 
 
 
