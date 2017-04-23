@@ -12,38 +12,40 @@ var roomDict = {}; // Holds a dictionary of roomIDs
 // room.id = roomID;
 // room.createTime = (new Date()).toString();
 // room.userDict = {};
-// room.userCount = 0; ???
-// room.totalUsers = 0; ???
+// room.socketDict = {};
 // room.totalSockets = 0;
 // room.totalMsg = 0;
 // room.adminUserDict = {};
 
+roomHandler.getAllRooms = function() {return roomDict;};
+roomHandler.getRoom = function(roomID) {return roomDict[roomID];};
+
 
 //TODO: add back md5.encode(inToken)
-roomHandler.validToken = function (inToken) {
+// roomHandler.validToken = function (inToken) {
 
-    var roomID = md5.encode(inToken);
+//     var roomID = md5.encode(inToken);
 
-    return roomID in roomDict;
-};
+//     return roomID in roomDict;
+// };
 
-roomHandler.addAdmin = function (inToken, userID) {
+// roomHandler.addAdmin = function (inToken, userID) {
     
-    var roomID = md5.encode(inToken);
+//     var roomID = md5.encode(inToken);
 
-    roomDict[roomID].adminUserDict[userID] = true;
+//     roomDict[roomID].adminUserDict[userID] = true;
     
-};
+// };
 
-roomHandler.getAdmins = function (roomID) {
-    return roomDict[roomID].adminUserDict;
-};
+// roomHandler.getAdmins = function (roomID) {
+//     return roomDict[roomID].adminUserDict;
+// };
 
 //TODO: add back md5.encode(inToken)
-roomHandler.getUsersInRoom = function(inToken) {
+// roomHandler.getUsersInRoom = function(inToken) {
 
-    return roomDict[md5.encode(inToken)].userDict;
-};
+//     return roomDict[md5.encode(inToken)].userDict;
+// };
 
 
 // Check if the socket's user already in the room
@@ -78,6 +80,7 @@ roomHandler.socketJoin = function(socket, roomID) {
     // user.roomID = roomID;  Wrong! user can have multiple rooms  
 
     socket.join(roomID);
+    room.socketDict[socket.id] = true;
     socket.roomID = roomID;
 
     return isNewUserOfRoom;
@@ -88,6 +91,7 @@ roomHandler.socketLeftRoom = function(socket) {
 
     var room = roomDict[socket.roomID];
     var user = socket.user;
+    room.totalSockets --;
 
     var last_socket_in_this_room = true;
     var i = 0;
@@ -101,12 +105,12 @@ roomHandler.socketLeftRoom = function(socket) {
     
     if (last_socket_in_this_room) {
         delete room.userDict[socket.user.id];
-        // delete room.adminUserDict[user.id];
-        room.userCount--;
     }
 
+    delete room.socketDict[socket.id];
+
     // May not want to delete the room, we'll lose the total user count and message count
-    if (room.userCount === 0)
+    if (!Object.keys(room.userDict).length)
         delete roomDict[socket.roomID];
 
     return last_socket_in_this_room;
@@ -117,19 +121,19 @@ roomHandler.newMsg = function (roomID) {
     roomDict[roomID].totalMsg++;
 };
 
-roomHandler.getRoomInfo = function(inToken) {
+// roomHandler.getRoomInfo = function(inToken) {
 
-    var room = roomDict[md5.encode(inToken)];
+//     var room = roomDict[md5.encode(inToken)];
 
-    return {
+//     return {
 
-        createTime: room.createTime,
-        totalUsers: room.totalUsers,
-        totalSockets: room.totalSockets,
-        totalMsg: room.totalMsg
+//         createTime: room.createTime,
+//         totalUsers: room.totalUsers,
+//         totalSockets: room.totalSockets,
+//         totalMsg: room.totalMsg
 
-    };
-};
+//     };
+// };
 
 
 function createRoom(roomID) {
@@ -141,11 +145,10 @@ function createRoom(roomID) {
     room.id = roomID;
     room.createTime = (new Date()).toString();
     room.userDict = {};
-    room.userCount = 0;
-    room.totalUsers = 0;
+    room.socketDict = {};
     room.totalSockets = 0;
     room.totalMsg = 0;
-    room.adminUserDict = {};
+    // room.adminUserDict = {};
     roomDict[roomID] = room;
 
     return room;

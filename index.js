@@ -64,6 +64,14 @@ app.get('/admin/user/:userId', function (req, res) {
     res.send(socketHandler.getUser(req.params.userId));
 })
 
+app.get('/admin/room', function (req, res) {
+    res.send(roomHandler.getAllRooms());
+})
+
+app.get('/admin/room/:roomID', function (req, res) {
+    res.send(roomHandler.getRoom(req.params.roomID));
+})
+
 app.get('/admin/socket', function (req, res) {
     // TODO: Converting circular structure to JSON at Object.stringify (native) failed
     res.send(socketHandler.getAllSockets());
