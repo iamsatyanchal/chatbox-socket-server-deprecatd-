@@ -23,17 +23,17 @@ adminHandler.validToken = function (inToken) {
 
 adminHandler.sendLogToAdmin = function (str) {
 
-    for (var adminUserID in adminUserDict) {
-        sendLogToUser(adminUserID, str);
-    }
+    // for (var adminUserID in adminUserDict) {
+    //     sendLogToUser(adminUserID, str);
+    // }
 };
 
 adminHandler.sendLogToRoomAdmin = function (str, roomID) {
 
-    var roomAdminIDs = roomHandler.getAdmins(roomID);
-    for (var adminUserID in roomAdminIDs) {
-        sendLogToUser(adminUserID, str);
-    }
+    // var roomAdminIDs = roomHandler.getAdmins(roomID);
+    // for (var adminUserID in roomAdminIDs) {
+    //     sendLogToUser(adminUserID, str);
+    // }
 };
 
 function sendLogToUser(adminUserID, str) {
