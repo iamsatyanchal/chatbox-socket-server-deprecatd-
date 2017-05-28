@@ -232,7 +232,8 @@ io.on('connection', function (socket) {
 
         io.in(socket.roomID).emit('new message', {//send to everybody including sender
             username: socket.username,
-            message: data.msg
+            message: data.msg,
+            uid: socket.user.id
         });
         msgHandler.receiveMsg(socket, data.msg);
         roomHandler.newMsg(socket.roomID);
