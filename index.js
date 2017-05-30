@@ -233,7 +233,7 @@ io.on('connection', function (socket) {
         io.in(socket.roomID).emit('new message', {//send to everybody including sender
             username: socket.username,
             message: data.msg,
-            uid: socket.user.id
+            sender: socket.user.id
         });
         msgHandler.receiveMsg(socket, data.msg);
         roomHandler.newMsg(socket.roomID);
@@ -251,7 +251,9 @@ io.on('connection', function (socket) {
             {
               username: socket.username,
               file: data.file,
-              fileName: data.fileName
+              fileName: data.fileName,
+              sender: socket.user.id
+
             }
 
         );
