@@ -104,7 +104,6 @@ io.on('connection', function (socket) {
     socket.on('login', function (data) {
 
         var client_requested_name = data.username;
-
         // "isNewUser" boolean disregard room 
         var isNewUser = socketHandler.socketJoin(socket, data.url, data.referrer, data.uuid, client_requested_name);
         
@@ -116,8 +115,6 @@ io.on('connection', function (socket) {
         var server_agreed_name = '';
 
         if (isNewUserOfRoom) {
-
-
             // ensure username unique in same chat room
             server_agreed_name = usernameHandler.registerUniqueName(client_requested_name, socket.roomID);
             socket.username = server_agreed_name;
@@ -130,17 +127,12 @@ io.on('connection', function (socket) {
                 username: server_agreed_name,
                 onlineUsers: usernameHandler.getNamesInRoom(socket.roomID) 
             });
-
             // echo to others that a new user just joined
             io.in(socket.roomID).emit('user joined', {
-                username: server_agreed_name
+                username: server_agreed_name,
+                onlineUsers: usernameHandler.getNamesInRoom(socket.roomID) 
             });
-
-
-
         } else {
-
-
             // The user already exists in Room, this is just a new connection from him
             // Find an earlier socket in this room to get his server-agreed-name
             var i = 0;
@@ -152,79 +144,43 @@ io.on('connection', function (socket) {
                     break;
                 }
             }
-
             socket.emit('welcome new connection', {
                 username: server_agreed_name,
                 onlineUsers: usernameHandler.getNamesInRoom(socket.roomID)
-
             });
-
-
         }
-
-        adminHandler.log(client_requested_name + '[' + data.uuid + ']' + ' joined in room ' + socket.roomID + ' server agreed name: ' + server_agreed_name);
-
-
     });
 
     // when the socket disconnects
     socket.on('disconnect', function () {
-        
-
         // the user only exist after login
+        // socket disconnected before logging in
         if (!socket.joined) {
-            adminHandler.log('Socket disconnected before logging in, sid: ' + socket.id);
             return;
         }
-
         // remove user from room if it's his last connection
         var lastConnectionOfUserInOneRoom = roomHandler.socketLeftRoom(socket);
-
         // last Connection of User boolean disregard room
         var lastConnectionOfUser = socketHandler.socketDisconnected(socket);
 
-
         if (lastConnectionOfUserInOneRoom) {
-            adminHandler.log(socket.username + '['+ socket.user.id + '] (' + socket.user.socketIDList.length + ') left room ' + socket.roomID);
-
-            usernameHandler.releaseUsername(socket.username, socket.roomID);
-
             io.in(socket.roomID).emit('stop typing', { username: socket.username });
-
             io.in(socket.roomID).emit('user left', {
                 username: socket.username,
-                numUsers: 90404 // TODO
+                onlineUsers: usernameHandler.getNamesInRoom(socket.roomID)
             });
-
-        } else {
-            adminHandler.log(socket.username + '['+ socket.user.id + '] closed a connection ('+(socket.user.socketIDList.length)+') in room ' + socket.roomID);
         }
-
     });
 
     // this is when one user wants to change his name
     // enforce that all his socket connections change name too
-    socket.on('user edits name', function (data) {
-
-
+    socket.on('change name', function (data) {
         var oldName = socket.username;
-
-        usernameHandler.userEditName(socket, data.newName);
-
-        io.in(socket.roomID).emit('log change name', {
+        usernameHandler.userEditName(socket, data.username);
+        io.in(socket.roomID).emit('name changed', {
             username: socket.username,
-            oldname: oldName
+            oldName: oldName
         });
-
-        adminHandler.log(oldName + ' changed name to ' + socket.username, socket.roomID);
-
-    });
-
-
-    socket.on('report', function (data) {
-
-        adminHandler.log(socket.username + ": " + data.msg, socket.roomID);
-
     });
 
     // when the client emits 'new message', this listens and executes
@@ -253,13 +209,9 @@ io.on('connection', function (socket) {
               file: data.file,
               fileName: data.fileName,
               sender: socket.user.id
-
             }
-
         );
-
     });
-
 
     // when the client emits 'typing', we broadcast it to others
     socket.on('typing', function (data) {
@@ -273,15 +225,6 @@ io.on('connection', function (socket) {
     
         io.in(socket.roomID).emit('stop typing', { username: data.username });
 
-    });
-
-    // for New Message Received Notification callback
-    socket.on('reset2origintitle', function (data) {
-        if (!socket.joined) return;
-        var socketsToResetTitle = socket.user.socketIDList;
-        for (var i = 0; i< socketsToResetTitle.length; i++) 
-            socketHandler.getSocket(socketsToResetTitle[i]).emit('reset2origintitle', {});
-        
     });
 
 });

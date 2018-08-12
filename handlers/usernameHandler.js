@@ -50,31 +50,20 @@ function checkUsername(name, roomID) {
 
     //add more filters here to sanitize user input, name change also goes through here
     if (name === '') name = 'no name'; 
-
     if (!(roomID in roomsOfNames)) return name;
-
     var namesInRoom = roomsOfNames[roomID];
-
     // DONT modify user's name!
     // if (name in namesInRoom){
-
     //     var num = 2;
-
     //     while (true) {
-
     //         var newName = name + '(' + num + ')';
-
     //         if (newName in namesInRoom)
-                
     //             num ++;
-
     //         else{
-
     //             return newName;
     //         }
     //     }
     // }
-
     return name;
 }
 
@@ -84,13 +73,9 @@ function registerUniqueName (client_requested_name, roomID) {
     // This is called when
     // 1. user first time enter a new room
     // 2. user change name
-
     var server_agreed_name = checkUsername(client_requested_name, roomID);
-
     saveNameInRoom(server_agreed_name, roomID);
-
     return server_agreed_name;
-
 }
 
 usernameHandler.registerUniqueName = registerUniqueName;
