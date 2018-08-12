@@ -55,25 +55,25 @@ function checkUsername(name, roomID) {
 
     var namesInRoom = roomsOfNames[roomID];
 
+    // DONT modify user's name!
+    // if (name in namesInRoom){
 
-    if (name in namesInRoom){
+    //     var num = 2;
 
-        var num = 2;
+    //     while (true) {
 
-        while (true) {
+    //         var newName = name + '(' + num + ')';
 
-            var newName = name + '(' + num + ')';
-
-            if (newName in namesInRoom)
+    //         if (newName in namesInRoom)
                 
-                num ++;
+    //             num ++;
 
-            else{
+    //         else{
 
-                return newName;
-            }
-        }
-    }
+    //             return newName;
+    //         }
+    //     }
+    // }
 
     return name;
 }
