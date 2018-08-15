@@ -26,6 +26,8 @@ var msgHandler = require('./handlers/msgHandler.js');
 var fileHandler = require('./handlers/fileHandler.js');
 var usernameHandler = require('./handlers/usernameHandler.js');
 
+var chatbot = require('./chatbot.js');
+
 //set timeout, default is 1 min
 //io.set("heartbeat timeout", 3*60*1000);
 
@@ -132,6 +134,12 @@ io.on('connection', function (socket) {
                 username: server_agreed_name,
                 onlineUsers: usernameHandler.getNamesInRoom(socket.roomID) 
             });
+
+            setTimeout(function(){
+                chatbot.sendMsg(socket);
+            },5*1000);
+            
+
         } else {
             // The user already exists in Room, this is just a new connection from him
             // Find an earlier socket in this room to get his server-agreed-name
