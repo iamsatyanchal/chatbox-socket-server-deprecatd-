@@ -14,12 +14,15 @@ var chatbot = {}
 
 function sendMsg(socket) {
 	if (!socket) return;
-	var rand = Math.floor(Math.random() * messages.length);
-	var msg = messages[rand];
+	var randMsgIndex = Math.floor(Math.random() * messages.length);
+	var msg = messages[randMsgIndex];
+
+	var userId = 'bot-' + Math.floor(Math.random() * 100);
+
 	socket.emit('new message', {
-		username: 'Linda',
+		username: '',
 		message: msg,
-		sender: 'bot-linda'
+		sender: userId
 	});
 }
 chatbot.sendMsg = sendMsg;

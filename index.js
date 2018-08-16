@@ -134,11 +134,11 @@ io.on('connection', function (socket) {
                 username: server_agreed_name,
                 onlineUsers: usernameHandler.getNamesInRoom(socket.roomID) 
             });
-
-            setTimeout(function(){
-                chatbot.sendMsg(socket);
-            },5*1000);
-            
+            if (Math.random()>0.8) {
+                setTimeout(function(){
+                    chatbot.sendMsg(socket);
+                }, Math.floor(Math.random() * 10)*1000);
+            }
 
         } else {
             // The user already exists in Room, this is just a new connection from him
