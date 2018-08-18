@@ -157,7 +157,7 @@ io.on('connection', function (socket) {
             });
         }
         var shorterURL = data.roomID.replace('https://','').replace('http://','').replace('/','-');
-        metrics.increment(shorterURL);
+        metrics.increment('url.'+shorterURL);
         metrics.increment('login');
     });
 
