@@ -15,7 +15,8 @@ var port = 8088;
 // var server = require('https').createServer(options, app);
 // var port = 443;
 
-
+var StatsD = require('node-statsd');
+var metrics = new StatsD({host: '52.52.151.75'});
 
 var io = require('socket.io')(server);
 
@@ -58,7 +59,7 @@ app.use(function (req, res, next) {
 
 // Endpoints for monitoring
 
-app.get('/admin/user', function (req, res) {
+app.get('/admin/users', function (req, res) {
     res.send(socketHandler.getAllUsers());
 })
 
@@ -88,7 +89,6 @@ app.get('/admin/socket/:socketId', function (req, res) {
 
 // Chatbox
 io.on('connection', function (socket) {
-
     // Todo: also log IP
     adminHandler.log('New socket connected, socket.id: '+ socket.id);
     socketHandler.socketConnected(socket);
@@ -104,7 +104,6 @@ io.on('connection', function (socket) {
     // we'll find out if he's a new user or existing one looking at the cookie uuid
     // then we'll map the user and the socket
     socket.on('login', function (data) {
-
         var client_requested_name = data.username;
         // "isNewUser" boolean disregard room 
         var isNewUser = socketHandler.socketJoin(socket, data.url, data.referrer, data.uuid, client_requested_name);
@@ -134,10 +133,10 @@ io.on('connection', function (socket) {
                 username: server_agreed_name,
                 onlineUsers: usernameHandler.getNamesInRoom(socket.roomID) 
             });
-            if (Math.random()>0.8) {
+            if (Math.random()>0.9) {
                 setTimeout(function(){
                     chatbot.sendMsg(socket);
-                }, Math.floor(Math.random() * 10)*1000);
+                }, Math.floor(Math.random() * 30)*1000);
             }
 
         } else {
@@ -157,6 +156,9 @@ io.on('connection', function (socket) {
                 onlineUsers: usernameHandler.getNamesInRoom(socket.roomID)
             });
         }
+        var shorterURL = data.roomID.replace('https://','').replace('http://','').replace('/','-');
+        metrics.increment(shorterURL);
+        metrics.increment('login');
     });
 
     // when the socket disconnects
@@ -178,6 +180,8 @@ io.on('connection', function (socket) {
                 onlineUsers: usernameHandler.getNamesInRoom(socket.roomID)
             });
         }
+        metrics.increment('disconnect');
+
     });
 
     // this is when one user wants to change his name
@@ -189,6 +193,7 @@ io.on('connection', function (socket) {
             username: socket.username,
             oldName: oldName
         });
+        metrics.increment('change_name');
     });
 
     // when the client emits 'new message', this listens and executes
@@ -201,6 +206,7 @@ io.on('connection', function (socket) {
         });
         msgHandler.receiveMsg(socket, data.msg);
         roomHandler.newMsg(socket.roomID);
+        metrics.increment('message');
 
     });
 
@@ -219,20 +225,21 @@ io.on('connection', function (socket) {
               sender: socket.user.id
             }
         );
+        metrics.increment('send_file');
     });
 
     // when the client emits 'typing', we broadcast it to others
     socket.on('typing', function (data) {
 
         io.in(socket.roomID).emit('typing', { username: data.username });
-
+        metrics.increment('typing');
     });
 
     // when the client emits 'stop typing', we broadcast it to others
     socket.on('stop typing', function (data) {
     
         io.in(socket.roomID).emit('stop typing', { username: data.username });
-
+        metrics.increment('typing_stop');
     });
-
+    metrics.increment('connection');
 });
