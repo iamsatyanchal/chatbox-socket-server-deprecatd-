@@ -28,6 +28,7 @@ var fileHandler = require('./handlers/fileHandler.js');
 var usernameHandler = require('./handlers/usernameHandler.js');
 
 var chatbot = require('./chatbot.js');
+var utils = require('./utils/utils.js');
 
 //set timeout, default is 1 min
 //io.set("heartbeat timeout", 3*60*1000);
@@ -156,9 +157,8 @@ io.on('connection', function (socket) {
                 onlineUsers: usernameHandler.getNamesInRoom(socket.roomID)
             });
         }
-        var shorterURL = data.roomID.replace('https://','').replace('http://','').replace('/','-');
-        metrics.increment('url.'+shorterURL);
         metrics.increment('login');
+        metrics.increment('domain.'+utils.getRootDomainFromURL(data.roomID));
     });
 
     // when the socket disconnects
