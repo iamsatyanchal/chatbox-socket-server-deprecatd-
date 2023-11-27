@@ -13,6 +13,6 @@
   "dependencies": {
     "express": "3.4.8",
     "node-statsd": "^0.1.1",
-    "socket.io": "^1.3.7"
+    "socket.io": "^2.0.0"
   }
 }
